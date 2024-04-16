@@ -6,7 +6,12 @@ import Foundation
 struct Resize: ParsableCommand {
 
     @Option(
-        name: [.customLong("window"), .customShort("p")],
+        name: [
+            .customLong("target-window"),
+            .customLong("target"),
+            .customLong("window"),
+            .customShort("t"),
+        ],
         help: "An ID for the target window, required."
     )
     var windowId: Int = -1

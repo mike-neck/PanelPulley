@@ -11,7 +11,7 @@ struct PanelPulley: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "pp",
         abstract: "Window utility",
-        usage: "Do an operation for windows.",
+        usage: "manipulates windows.",
         subcommands: [
             List.self,
             Resize.self,
