@@ -12,7 +12,10 @@ struct PanelPulley: ParsableCommand {
         commandName: "pp",
         abstract: "Window utility",
         usage: "Do an operation for windows.",
-        subcommands: [List.self],
+        subcommands: [
+            List.self,
+            Resize.self,
+        ],
         defaultSubcommand: List.self
     )
 }
