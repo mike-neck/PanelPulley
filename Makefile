@@ -1,4 +1,5 @@
 CONFIGURATIONS := debug release
+SWIFT_FORMAT := $(shell which swift-format)
 
 .PHONY: tasks
 tasks:
@@ -22,3 +23,11 @@ all: $(foreach config,$(CONFIGURATIONS),build-$(config))
 clean:
 	@echo $(@)
 	@rm -rf ./build
+
+ifneq "$(SWIFT_FORMAT)" ""
+.PHONY: format
+format:
+	@echo $(@)
+	@$(SWIFT_FORMAT) --recursive --parallel --in-place --ignore-unparsable-files Sources
+
+endif
