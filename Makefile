@@ -14,3 +14,11 @@ build-$(1):
 endef
 
 $(foreach config,$(CONFIGURATIONS),$(eval $(call BuildTask,$(config))))
+
+.PHONY: all
+all: $(foreach config,$(CONFIGURATIONS),build-$(config))
+
+.PHONY: clean
+clean:
+	@echo $(@)
+	@rm -rf ./build
