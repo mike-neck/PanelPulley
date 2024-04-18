@@ -2,6 +2,7 @@ import ApplicationServices
 import ArgumentParser
 import CoreGraphics
 import Foundation
+import Darwin
 
 struct Resize: ParsableCommand {
     
@@ -39,7 +40,13 @@ struct Resize: ParsableCommand {
         help: "Specifies the height of the target window, either width or height or x-axis or y-axis is required."
     )
     var yAxis: Int = -1
-    
+
+    @Option(
+        name: [.customLong("verbose"), .customShort("v")],
+        help: "Prints debug logs"
+    )
+    var verbose: Bool = false
+
     func matchingWindowId() -> ([String: Any]) -> Bool {
         let windowId = self.windowId
         return { win in
@@ -71,8 +78,21 @@ struct Resize: ParsableCommand {
             throw ValidationError("Either 'width' or 'height' or 'x-axis' or 'y-axis' is required.")
         }
     }
-    
+
+    private var _debug: Bool {
+        get {
+            let p = ProcessInfo.processInfo
+            return verbose || p.environment["DEBUG"] != nil
+        }
+    }
+
+    private static let SIZE: CFString = kAXSizeAttribute as CFString
+    private static let POSITION: CFString = kAXPositionAttribute as CFString
+
     mutating func run() throws {
+        if _debug {
+            fputs("options: \(self)\n", stderr)
+        }
         guard let list = CGWindowListCopyWindowInfo(CGWindowListOption.optionAll, kCGNullWindowID) as? [[String: Any]] else {
             throw ValidationError("No windows found.")
         }
@@ -91,26 +111,53 @@ struct Resize: ParsableCommand {
             throw ValidationError("Unable to retrieve the window for the given ID[\(self.windowId)]")
         }
         
-        try changeWindowSize(window)
+        try changeRectOf(window)
     }
-    
-    func changeWindowSize(_ window: AXUIElement) throws {
+
+    func changeRectOf(_ window: AXUIElement) throws {
         guard let currentWindowSize: CGSize = window.getCurrentWindowSize() else {
             throw ValidationError("Unable to retrieve the size of the window for the given ID[\(self.windowId)]")
         }
-
-        guard let windowSize = calculateNewSize(from: currentWindowSize) else {
-            throw ValidationError("Unable to set the window size for the given ID[\(self.windowId)]")
+        guard let currentWindowPosition = window.getCurrentWindowPosition() else {
+            throw ValidationError("Unable to retrieve the position of the window for the given ID[\(self.windowId)]")
         }
-        AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, windowSize)
+
+        // try changing position first, because changing the window size is affected by the window position and the display size.
+        if var windowPosition = calculateNewPosition(from: currentWindowPosition),
+           let position = AXValueCreate(.cgPoint, &windowPosition)
+        {
+            let err = AXUIElementSetAttributeValue(window, Resize.POSITION, position)
+            if _debug {
+                fputs("[err:\(err)]set position: \(currentWindowPosition): \(windowPosition) -> \(window.getCurrentWindowPosition()) \n", stderr)
+            }
+        }
+
+        if var windowSize = calculateNewSize(from: currentWindowSize),
+           let size = AXValueCreate(.cgSize, &windowSize)
+        {
+            let err = AXUIElementSetAttributeValue(window, Resize.SIZE , size)
+            if _debug {
+                fputs("[err:\(err)]set size: \(currentWindowSize): \(windowSize) -> \(window.getCurrentWindowSize()) \n", stderr)
+            }
+        }
     }
 
-    func calculateNewSize(from currentWindowSize: CGSize) -> AXValue? {
+    func calculateNewSize(from currentWindowSize: CGSize) -> CGSize? {
+        if self.width == -1 && self.height == -1 {
+            return nil
+        }
         let newWidth = self.width == -1 ? currentWindowSize.width : CGFloat(self.width)
         let newHeight = self.height == -1 ? currentWindowSize.height : CGFloat(self.height)
+        return CGSize(width: newWidth, height: newHeight)
+    }
 
-        var newSize: CGSize = CGSize(width: newWidth, height: newHeight)
-        return AXValueCreate(.cgSize, &newSize)
+    func calculateNewPosition(from currentPoint: CGPoint) -> CGPoint? {
+        if self.xAxis == -1 && self.yAxis == -1 {
+            return nil
+        }
+        let x = xAxis == -1 ? currentPoint.x : CGFloat(xAxis)
+        let y = yAxis == -1 ? currentPoint.y : CGFloat(yAxis)
+        return CGPoint(x: x, y: y)
     }
 }
 
@@ -126,7 +173,7 @@ extension AXUIElement {
         }
         return attributes
     }
-
+    
     func getCurrentWindowSize() -> CGSize? {
         var axSizeValue: AnyObject?
         let result = AXUIElementCopyAttributeValue(self, kAXSizeAttribute as CFString, &axSizeValue)
@@ -145,5 +192,24 @@ extension AXUIElement {
             return nil
         }
         return size
+    }
+
+    func getCurrentWindowPosition() -> CGPoint? {
+        var axPosition: AnyObject?
+        if .success != AXUIElementCopyAttributeValue(self, kAXPositionAttribute as CFString, &axPosition) {
+            return nil
+        }
+        switch axPosition {
+        case is AXValue:
+            break
+        default:
+            return nil
+        }
+        let position = axPosition as! AXValue
+        var pos = CGPoint()
+        if !AXValueGetValue(position, .cgPoint, &pos) {
+            return nil
+        }
+        return pos
     }
 }
