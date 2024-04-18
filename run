@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+readonly app="${PWD}/.build/debug/pp"
+
+if [[ ! -x "${app}" ]]; then
+  echo "executable[${app}] not found" >> /dev/stderr
+  exit 1
+fi
+
+stat -f 'RUN: %N %SB' -t '%Y-%m-%dT%H:%M' "${app}"
+
+"${app}" "${@}"
