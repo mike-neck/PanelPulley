@@ -31,10 +31,12 @@ struct List: ParsableCommand {
       .sorted { (left: Item, right: Item) -> Bool in left.id < right.id }
       .forEach { (item: Item) -> Void in
         let ax = item.minAxis
+        let c = item.app.map({ ch in ch.isASCII ? 0: 1 }).reduce(0, +)
         let line = String(
           format:
-            "%6d \(item.app) [w=%4d,h=%4d@%d,%d](osc=\(item.isOnScreen),v=\(item.visible)) \(item.title)",
+            "%6d %@ [w=%4d,h=%4d,x=%4d,y=%4d] \(item.title)",
           item.id,
+          item.app.padding(toLength: 30 - c, withPad: " ", startingAt: 0),
           item.width,
           item.height,
           ax.x,
