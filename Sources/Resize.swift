@@ -225,3 +225,25 @@ extension AXUIElement {
     return pos
   }
 }
+
+struct ResizeEnv {
+  let verbose: Bool
+  let env: [String: String]
+
+  init(from resize: Resize) {
+    self.init(resize.verbose)
+  }
+
+  init(_ verbose: Bool) {
+    self.init(verbose, ProcessInfo.processInfo.environment)
+  }
+
+  init(_ verbose: Bool, _ env: [String: String]) {
+    self.verbose = verbose
+    self.env = env
+  }
+
+  var isDebug: Bool {
+    return verbose || env["DEBUG"] != nil
+  }
+}
