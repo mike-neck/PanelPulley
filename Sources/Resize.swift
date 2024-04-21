@@ -82,8 +82,8 @@ struct Resize: ParsableCommand {
   }
 
   private var _debug: Bool {
-    let p = ProcessInfo.processInfo
-    return verbose || p.environment["DEBUG"] != nil
+    let env = ResizeEnv(self.verbose)
+    return env.isDebug
   }
 
   private static let SIZE: CFString = kAXSizeAttribute as CFString
@@ -229,10 +229,6 @@ extension AXUIElement {
 struct ResizeEnv {
   let verbose: Bool
   let env: [String: String]
-
-  init(from resize: Resize) {
-    self.init(resize.verbose)
-  }
 
   init(_ verbose: Bool) {
     self.init(verbose, ProcessInfo.processInfo.environment)
