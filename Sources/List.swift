@@ -10,8 +10,13 @@ import CoreGraphics
 import Foundation
 
 struct List: ParsableCommand {
-  mutating func run() {
+
+  static func windowList() -> WindowList? {
     let list = CGWindowListCopyWindowInfo(CGWindowListOption.optionAll, kCGNullWindowID)
+    return WindowList(of: list)
+  }
+
+  mutating func run() throws {
     let maxDisplays: UInt32 = 20
     var displays = [CGDirectDisplayID](repeating: 0, count: Int(maxDisplays))
     var displayCount: UInt32 = 0
@@ -20,19 +25,38 @@ struct List: ParsableCommand {
       NSLog("error \(err)")
       return
     }
-    guard let windowList = [NSDictionary](from: list) else {
-      NSLog("Failed to get window list")
-      return
+    guard let list = List.windowList(),
+      let lines = list.makeOutputs()
+    else {
+      throw CleanExit.message("no window found")
     }
-    windowList
+    lines.forEach { print($0) }
+  }
+}
+
+struct WindowList {
+  let windowInfoArray: CFArray
+  init?(of array: CFArray?) {
+    guard let windowInfoArray = array else {
+      return nil
+    }
+    self.windowInfoArray = windowInfoArray
+  }
+
+  func makeOutputs() -> [String]? {
+    guard let windowList = [NSDictionary](from: windowInfoArray) else {
+      return nil
+    }
+    let lines: [String] =
+      windowList
       .compactMap { (window: NSDictionary) -> Item? in Item(window) }
       .filter { (item: Item) -> Bool in item.isOnScreen }
       .filter { (item: Item) -> Bool in 0 < item.minAxis.y }
       .sorted { (left: Item, right: Item) -> Bool in left.id < right.id }
-      .forEach { (item: Item) -> Void in
+      .map { (item: Item) -> String in
         let ax = item.minAxis
-        let c = item.app.map({ ch in ch.isASCII ? 0: 1 }).reduce(0, +)
-        let line = String(
+        let c = item.app.map({ ch in ch.isASCII ? 0 : 1 }).reduce(0, +)
+        return String(
           format:
             "%6d %@ [w=%4d,h=%4d,x=%4d,y=%4d] \(item.title)",
           item.id,
@@ -42,12 +66,12 @@ struct List: ParsableCommand {
           ax.x,
           ax.y
         )
-        print(line)
       }
+    return lines
   }
 }
 
-struct Axis {
+struct Axis: Equatable {
   let x: Int
   let y: Int
 }
@@ -59,7 +83,7 @@ extension CFNumber {
   }
 }
 
-struct Item {
+struct Item: Equatable {
   let id: Int
   let app: String
   let title: String
@@ -103,6 +127,9 @@ extension Array where Element == NSDictionary {
       return nil
     }
     let size = CFArrayGetCount(array)
+    if size == 0 {
+      return nil
+    }
     self = (0..<size).map({ (index: Int) -> NSDictionary in
       let value = CFArrayGetValueAtIndex(array, index)
       return unsafeBitCast(value, to: NSDictionary.self)
