@@ -3,6 +3,7 @@ SWIFT_FORMAT := $(shell which swift-format)
 BUILD_DIR := .build
 BUILD := build
 CACHE_DIRS := repositories checkouts
+TEST_REPORT := $(BUILD)/test-report.xml
 
 .PHONY: tasks
 tasks:
@@ -38,5 +39,11 @@ ifneq "$(SWIFT_FORMAT)" ""
 format:
 	@echo $(@)
 	@$(SWIFT_FORMAT) --recursive --parallel --in-place --ignore-unparsable-files Sources
+	@$(SWIFT_FORMAT) --recursive --parallel --in-place --ignore-unparsable-files Tests
 
 endif
+
+.PHONY: test
+test:
+	@echo $(@)
+	@swift test --parallel --xunit-output $(TEST_REPORT)
