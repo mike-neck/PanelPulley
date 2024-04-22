@@ -148,4 +148,46 @@ class ResizeTest: XCTestCase {
       )
     }
   }
+
+  class CalculateNewSizeTest {
+
+    func test_WithDefaultValue_ThenNil() {
+      let resize = Resize()
+      let current = CGSize(width: 100.0, height: 100.0)
+      XCTAssertNil(
+        resize.calculateNewSize(from: current),
+        "calculateNewSize, [w:-1,h:-1], nil"
+      )
+    }
+
+    func test_WithWidthGiven_ThenNotNil() throws {
+      var resize = Resize()
+      resize.width = 20
+      let current = CGSize(width: 100.0, height: 100.0)
+      let newSize = try XCTUnwrap(
+        resize.calculateNewSize(from: current),
+        "calculateNewSize, [w:20,h:-1], not nil"
+      )
+      XCTAssertEqual(
+        CGSize(width: 20.0, height: 100.0),
+        newSize,
+        "calculateNewSize, [w:20,h:-1]/[w:100,h:100], [w:20,h:100]"
+      )
+    }
+
+    func test_WithHeightGiven_ThenNotNil() throws {
+      var resize = Resize()
+      resize.height = 20
+      let current = CGSize(width: 100.0, height: 100.0)
+      let newSize = try XCTUnwrap(
+        resize.calculateNewSize(from: current),
+        "calculateNewSize, [w:-1,h:20], not nil"
+      )
+      XCTAssertEqual(
+        CGSize(width: 100.0, height: 20.0),
+        newSize,
+        "calculateNewSize, [w:-1,h:20]/[w:100,h:100], [w:100,h:20]"
+      )
+    }
+  }
 }
