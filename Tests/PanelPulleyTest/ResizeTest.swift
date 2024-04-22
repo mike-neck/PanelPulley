@@ -102,4 +102,50 @@ class ResizeTest: XCTestCase {
       "validate, with all option being -1, throws error"
     )
   }
+
+  class MatchingWindowIdTest: XCTestCase {
+    static let window = [
+      kCGWindowNumber as String: 100
+    ]
+
+    func testMatchingCase() {
+      var resize = Resize()
+      resize.windowId = 100
+      let predicate: ([String: Any]) -> Bool = resize.matchingWindowId()
+      XCTAssertTrue(
+        predicate(MatchingWindowIdTest.window),
+        "matching, resize[100], window[100] -> true"
+      )
+    }
+
+    func testNotMatchingCase() {
+      var resize = Resize()
+      resize.windowId = 101
+      let predicate: ([String: Any]) -> Bool = resize.matchingWindowId()
+      XCTAssertFalse(
+        predicate(MatchingWindowIdTest.window),
+        "matching, resize[100], window[101] -> false"
+      )
+    }
+
+    func testNoIdCase() {
+      var resize = Resize()
+      resize.windowId = 100
+      let predicate: ([String: Any]) -> Bool = resize.matchingWindowId()
+      XCTAssertFalse(
+        predicate([:]),
+        "matching, resize[100], [:] -> false"
+      )
+    }
+
+    func testNoInvalidIdTypeCase() {
+      var resize = Resize()
+      resize.windowId = 100
+      let predicate: ([String: Any]) -> Bool = resize.matchingWindowId()
+      XCTAssertFalse(
+        predicate([kCGWindowNumber as String: "invalid id case"]),
+        "matching, resize[100], window[String] -> false"
+      )
+    }
+  }
 }
