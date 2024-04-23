@@ -54,7 +54,7 @@ struct Resize: ParsableCommand {
   func matchingWindowId() -> ([String: Any]) -> Bool {
     let windowId = self.windowId
     return { win in
-      guard let id = win[kCGWindowNumber as String] as? Int32 else {
+      guard let id = win[kCGWindowNumber as String] as? Int else {
         return false
       }
       return windowId == id

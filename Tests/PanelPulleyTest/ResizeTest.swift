@@ -23,7 +23,7 @@ class ResizeEnvTest: XCTestCase {
 
 class ResizeTest: XCTestCase {
 
-  func createValuedResize(
+  static func createValuedResize(
     width: Int = 100,
     height: Int = 100,
     xAxis: Int = 100,
@@ -47,8 +47,8 @@ class ResizeTest: XCTestCase {
 
   }
 
-  func createNoOptionResize(exceptFor option: ResizeOption = .nothing) -> Resize {
-    var resize = createValuedResize(width: -1, height: -1, xAxis: -1, yAxis: -1)
+  static func createNoOptionResize(exceptFor option: ResizeOption = .nothing) -> Resize {
+    var resize = ResizeTest.createValuedResize(width: -1, height: -1, xAxis: -1, yAxis: -1)
     switch option {
     case .width(let width):
       resize.width = width
@@ -65,10 +65,10 @@ class ResizeTest: XCTestCase {
 
   func testValidate_WithNotAllOptionBeingMinus1_ThrowsNoError() throws {
     let resizes: [Resize] = [
-      createValuedResize(width: -1),
-      createValuedResize(height: -1),
-      createValuedResize(xAxis: -1),
-      createValuedResize(yAxis: -1),
+      ResizeTest.createValuedResize(width: -1),
+      ResizeTest.createValuedResize(height: -1),
+      ResizeTest.createValuedResize(xAxis: -1),
+      ResizeTest.createValuedResize(yAxis: -1),
     ]
     for r in resizes {
       var resize = r
@@ -81,10 +81,10 @@ class ResizeTest: XCTestCase {
 
   func testValidate_WithAnyHavingOption_ThrowsNoError() throws {
     let resizes: [Resize] = [
-      createNoOptionResize(exceptFor: .width(400)),
-      createNoOptionResize(exceptFor: .height(400)),
-      createNoOptionResize(exceptFor: .xAxis(400)),
-      createNoOptionResize(exceptFor: .yAxis(400)),
+      ResizeTest.createNoOptionResize(exceptFor: .width(400)),
+      ResizeTest.createNoOptionResize(exceptFor: .height(400)),
+      ResizeTest.createNoOptionResize(exceptFor: .xAxis(400)),
+      ResizeTest.createNoOptionResize(exceptFor: .yAxis(400)),
     ]
     for r in resizes {
       var resize = r
@@ -96,98 +96,96 @@ class ResizeTest: XCTestCase {
   }
 
   func testValidate_WithAllOptionBeingMinus1_ThrowsError() {
-    var resize = createValuedResize(width: -1, height: -1, xAxis: -1, yAxis: -1)
+    var resize = ResizeTest.createValuedResize(width: -1, height: -1, xAxis: -1, yAxis: -1)
     XCTAssertThrowsError(
       try resize.validate(),
       "validate, with all option being -1, throws error"
     )
   }
+}
 
-  class MatchingWindowIdTest: XCTestCase {
-    static let window = [
-      kCGWindowNumber as String: 100
-    ]
+class MatchingWindowIdTest: XCTestCase {
+  static let window = [
+    kCGWindowNumber as String: 100 as Int
+  ]
 
-    func testMatchingCase() {
-      var resize = Resize()
-      resize.windowId = 100
-      let predicate: ([String: Any]) -> Bool = resize.matchingWindowId()
-      XCTAssertTrue(
-        predicate(MatchingWindowIdTest.window),
-        "matching, resize[100], window[100] -> true"
-      )
-    }
-
-    func testNotMatchingCase() {
-      var resize = Resize()
-      resize.windowId = 101
-      let predicate: ([String: Any]) -> Bool = resize.matchingWindowId()
-      XCTAssertFalse(
-        predicate(MatchingWindowIdTest.window),
-        "matching, resize[100], window[101] -> false"
-      )
-    }
-
-    func testNoIdCase() {
-      var resize = Resize()
-      resize.windowId = 100
-      let predicate: ([String: Any]) -> Bool = resize.matchingWindowId()
-      XCTAssertFalse(
-        predicate([:]),
-        "matching, resize[100], [:] -> false"
-      )
-    }
-
-    func testNoInvalidIdTypeCase() {
-      var resize = Resize()
-      resize.windowId = 100
-      let predicate: ([String: Any]) -> Bool = resize.matchingWindowId()
-      XCTAssertFalse(
-        predicate([kCGWindowNumber as String: "invalid id case"]),
-        "matching, resize[100], window[String] -> false"
-      )
-    }
+  func testMatchingCase() {
+    var resize = ResizeTest.createNoOptionResize()
+    resize.windowId = 100
+    let predicate: ([String: Any]) -> Bool = resize.matchingWindowId()
+    XCTAssertTrue(
+      predicate(MatchingWindowIdTest.window),
+      "matching, resize[100], window[100] -> true\nresize:\(resize), window:\(MatchingWindowIdTest.window) -> predicate:\(String(describing: predicate)) -> result:\(predicate(MatchingWindowIdTest.window))\n--------\n\n"
+    )
   }
 
-  class CalculateNewSizeTest {
+  func testNotMatchingCase() {
+    var resize = Resize()
+    resize.windowId = 101
+    let predicate: ([String: Any]) -> Bool = resize.matchingWindowId()
+    XCTAssertFalse(
+      predicate(MatchingWindowIdTest.window),
+      "matching, resize[100], window[101] -> false"
+    )
+  }
 
-    func test_WithDefaultValue_ThenNil() {
-      let resize = Resize()
-      let current = CGSize(width: 100.0, height: 100.0)
-      XCTAssertNil(
-        resize.calculateNewSize(from: current),
-        "calculateNewSize, [w:-1,h:-1], nil"
-      )
-    }
+  func testNoIdCase() {
+    var resize = Resize()
+    resize.windowId = 100
+    let predicate: ([String: Any]) -> Bool = resize.matchingWindowId()
+    XCTAssertFalse(
+      predicate([:]),
+      "matching, resize[100], [:] -> false"
+    )
+  }
 
-    func test_WithWidthGiven_ThenNotNil() throws {
-      var resize = Resize()
-      resize.width = 20
-      let current = CGSize(width: 100.0, height: 100.0)
-      let newSize = try XCTUnwrap(
-        resize.calculateNewSize(from: current),
-        "calculateNewSize, [w:20,h:-1], not nil"
-      )
-      XCTAssertEqual(
-        CGSize(width: 20.0, height: 100.0),
-        newSize,
-        "calculateNewSize, [w:20,h:-1]/[w:100,h:100], [w:20,h:100]"
-      )
-    }
+  func testInvalidIdTypeCase() {
+    var resize = Resize()
+    resize.windowId = 100
+    let predicate: ([String: Any]) -> Bool = resize.matchingWindowId()
+    XCTAssertFalse(
+      predicate([kCGWindowNumber as String: "invalid id case"]),
+      "matching, resize[100], window[String] -> false"
+    )
+  }
+}
 
-    func test_WithHeightGiven_ThenNotNil() throws {
-      var resize = Resize()
-      resize.height = 20
-      let current = CGSize(width: 100.0, height: 100.0)
-      let newSize = try XCTUnwrap(
-        resize.calculateNewSize(from: current),
-        "calculateNewSize, [w:-1,h:20], not nil"
-      )
-      XCTAssertEqual(
-        CGSize(width: 100.0, height: 20.0),
-        newSize,
-        "calculateNewSize, [w:-1,h:20]/[w:100,h:100], [w:100,h:20]"
-      )
-    }
+class CalculateNewSizeTest: XCTestCase {
+
+  func test_WithDefaultValue_ThenNil() {
+    let resize = ResizeTest.createNoOptionResize()
+    let current = CGSize(width: 100.0, height: 100.0)
+    XCTAssertNil(
+      resize.calculateNewSize(from: current),
+      "calculateNewSize, [w:-1,h:-1], nil"
+    )
+  }
+
+  func test_WithWidthGiven_ThenNotNil() throws {
+    let resize = ResizeTest.createNoOptionResize(exceptFor: .width(20))
+    let current = CGSize(width: 100.0, height: 100.0)
+    let newSize = try XCTUnwrap(
+      resize.calculateNewSize(from: current),
+      "calculateNewSize, [w:20,h:-1], not nil"
+    )
+    XCTAssertEqual(
+      CGSize(width: 20.0, height: 100.0),
+      newSize,
+      "calculateNewSize, [w:20,h:-1]/[w:100,h:100], [w:20,h:100]"
+    )
+  }
+
+  func test_WithHeightGiven_ThenNotNil() throws {
+    let resize = ResizeTest.createNoOptionResize(exceptFor: .height(20))
+    let current = CGSize(width: 100.0, height: 100.0)
+    let newSize = try XCTUnwrap(
+      resize.calculateNewSize(from: current),
+      "calculateNewSize, [w:-1,h:20], not nil"
+    )
+    XCTAssertEqual(
+      CGSize(width: 100.0, height: 20.0),
+      newSize,
+      "calculateNewSize, [w:-1,h:20]/[w:100,h:100], [w:100,h:20]"
+    )
   }
 }
