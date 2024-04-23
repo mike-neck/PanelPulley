@@ -189,3 +189,65 @@ class CalculateNewSizeTest: XCTestCase {
     )
   }
 }
+
+class CalculateNewPositionTest: XCTestCase {
+
+  func test_WithDefaultValue_ThenNil() {
+    let resize = ResizeTest.createNoOptionResize()
+    let current = CGPoint(x: 40.0, y: 30.0)
+    XCTAssertNil(
+      resize.calculateNewPosition(from: current),
+      "calculateNewPosition, [x:-1,y:-1], nil"
+    )
+  }
+
+  func test_WithXAxisGiven_ThenNotNil() throws {
+    let resize = ResizeTest.createNoOptionResize(exceptFor: .xAxis(100))
+    let current = CGPoint(x: 40.0, y: 30.0)
+    let newPosition = resize.calculateNewPosition(from: current)
+    XCTAssertNotNil(
+      newPosition,
+      "calculateNewPosition, [x:100,y:-1], not nil"
+    )
+    let position = try XCTUnwrap(newPosition)
+    XCTAssertEqual(
+      CGPoint(x: 100.0, y: 30.0),
+      position,
+      "calculateNewPosition, input:[x:100,y:-1], current:[x:40,y:30] -> [x:100,y:30]"
+    )
+  }
+
+  func test_WithYAxisGiven_ThenNotNil() throws {
+    let resize = ResizeTest.createNoOptionResize(exceptFor: .yAxis(100))
+    let current = CGPoint(x: 40.0, y: 30.0)
+    let newPosition = resize.calculateNewPosition(from: current)
+    XCTAssertNotNil(
+      newPosition,
+      "calculateNewPosition, [x:-1,y:100], not nil"
+    )
+    let position = try XCTUnwrap(newPosition)
+    XCTAssertEqual(
+      CGPoint(x: 40.0, y: 100.0),
+      position,
+      "calculateNewPosition, input:[x:-1,y:100], current:[x:40,y:30] -> [x:40,y:100]"
+    )
+  }
+
+  func test_WithBothGiven_ThenNotNil() throws {
+    var resize = ResizeTest.createNoOptionResize()
+    resize.yAxis = 100
+    resize.xAxis = 200
+    let current = CGPoint(x: 40.0, y: 30.0)
+    let newPosition = resize.calculateNewPosition(from: current)
+    XCTAssertNotNil(
+      newPosition,
+      "calculateNewPosition, [x:200,y:100], not nil"
+    )
+    let position = try XCTUnwrap(newPosition)
+    XCTAssertEqual(
+      CGPoint(x: 200.0, y: 100.0),
+      position,
+      "calculateNewPosition, input:[x:200,y:100], current:[x:40,y:30] -> [x:200,y:100]"
+    )
+  }
+}
