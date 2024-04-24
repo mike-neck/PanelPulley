@@ -46,4 +46,5 @@ endif
 .PHONY: test
 test:
 	@echo $(@)
-	@swift test --parallel --xunit-output $(TEST_REPORT)
+	@swift test --parallel --xunit-output $(TEST_REPORT) --enable-code-coverage | tee "$(BUILD)/test-execution.log"
+	@cp "$$(swift test --show-coverage-path)" "$(BUILD)/test-coverage.json"
