@@ -86,8 +86,8 @@ struct Resize: ParsableCommand {
     return env.isDebug
   }
 
-  private static let SIZE: CFString = kAXSizeAttribute as CFString
-  private static let POSITION: CFString = kAXPositionAttribute as CFString
+  static let SIZE: CFString = kAXSizeAttribute as CFString
+  static let POSITION: CFString = kAXPositionAttribute as CFString
 
   mutating func run() throws {
     if _debug {
@@ -118,37 +118,45 @@ struct Resize: ParsableCommand {
     try changeRectOf(window)
   }
 
-  func changeRectOf(_ window: AXUIElement) throws {
-    guard let currentWindowSize: CGSize = window.getCurrentWindowSize() else {
+  func changeRectOf(_ window: any Window, system: SystemProtocol = System.ofDefault) throws {
+    var win = window
+    guard let currentWindowSize: CGSize = win.getCurrentWindowSize() else {
       throw ValidationError(
         "Unable to retrieve the size of the window for the given ID[\(self.windowId)]")
     }
-    guard let currentWindowPosition = window.getCurrentWindowPosition() else {
+    guard let currentWindowPosition = win.getCurrentWindowPosition() else {
       throw ValidationError(
         "Unable to retrieve the position of the window for the given ID[\(self.windowId)]")
     }
 
     // try changing position first, because changing the window size is affected by the window position and the display size.
-    if var windowPosition = calculateNewPosition(from: currentWindowPosition),
-      let position = AXValueCreate(.cgPoint, &windowPosition)
+
+    if let windowPosition = calculateNewPosition(from: currentWindowPosition),
+      let result = win.setPosition(with: windowPosition)
     {
-      let err = AXUIElementSetAttributeValue(window, Resize.POSITION, position)
       if _debug {
-        fputs(
-          "[err:\(err)]set position: \(currentWindowPosition): \(windowPosition) -> \(window.getCurrentWindowPosition()) \n",
-          stderr)
+        system.write(
+          stderr:
+            "[result:\(result)]set position: \(currentWindowPosition): \(windowPosition)"
+        )
       }
+    } else if _debug {
+      system.write(
+        stderr:
+          "[not set]set position: \(currentWindowPosition): [\(self)]")
     }
 
-    if var windowSize = calculateNewSize(from: currentWindowSize),
-      let size = AXValueCreate(.cgSize, &windowSize)
+    if let windowSize = calculateNewSize(from: currentWindowSize),
+      let result = win.setSize(with: windowSize)
     {
-      let err = AXUIElementSetAttributeValue(window, Resize.SIZE, size)
       if _debug {
-        fputs(
-          "[err:\(err)]set size: \(currentWindowSize): \(windowSize) -> \(window.getCurrentWindowSize()) \n",
-          stderr)
+        system.write(
+          stderr:
+            "[result:\(result)]set size: \(currentWindowSize): \(windowSize)"
+        )
       }
+    } else if _debug {
+      system.write(stderr: "[not set]set size: \(currentWindowSize): \(self)")
     }
   }
 
@@ -171,7 +179,47 @@ struct Resize: ParsableCommand {
   }
 }
 
-extension AXUIElement {
+struct OperationResult {
+  let code: Int32
+  var isSuccess: Bool {
+    self.code == 0
+  }
+}
+
+protocol Window {
+  func getCurrentWindowSize() -> CGSize?
+  func getCurrentWindowPosition() -> CGPoint?
+  // apply given new size to this window
+  // returns nil if nothing to be applied to this window
+  mutating func setSize(with newSize: CGSize?) -> OperationResult?
+  // apply given new position to this window
+  // returns nil if nothing to be applied to this window
+  mutating func setPosition(with newPosition: CGPoint?) -> OperationResult?
+}
+
+extension AXUIElement: Window {
+  func setSize(with newSize: CGSize?) -> OperationResult? {
+    guard var windowSize = newSize else {
+      return nil
+    }
+    guard let size = AXValueCreate(.cgSize, &windowSize) else {
+      return nil
+    }
+    let err = AXUIElementSetAttributeValue(self, kAXWindowsAttribute as CFString, size)
+    return OperationResult(code: err.rawValue)
+  }
+
+  func setPosition(with newPosition: CGPoint?) -> OperationResult? {
+    guard var windowPosition = newPosition else {
+      return nil
+    }
+    guard let position = AXValueCreate(.cgPoint, &windowPosition) else {
+      return nil
+    }
+    let err = AXUIElementSetAttributeValue(self, Resize.POSITION, position)
+    return OperationResult(code: err.rawValue)
+  }
+
   func copyAttributeValue() -> [AXUIElement]? {
     var window: AnyObject?
     let result = AXUIElementCopyAttributeValue(self, kAXWindowsAttribute as CFString, &window)
