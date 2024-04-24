@@ -102,6 +102,90 @@ class ResizeTest: XCTestCase {
       "validate, with all option being -1, throws error"
     )
   }
+
+  func testChangeRectOf_WhenCurrentWindowSizeReturnsNil_ThenErrorThrown() throws {
+    var resize = ResizeTest.createValuedResize()
+    resize.windowId = 1
+    resize.verbose = false
+    let window = ResizeTestMockWindow(
+      width: nil, height: nil, xAxis: nil, yAxis: nil, setSize: .nothing, setPosition: .nothing)
+    XCTAssertThrowsError(
+      try resize.changeRectOf(window, system: window),
+      "changeRectOf, currentSize -> nil, -> error"
+    )
+  }
+
+  func testChangeRectOf_WhenCurrentWindowPositionReturnsNil_ThenErrorThrown() throws {
+    var resize = ResizeTest.createValuedResize()
+    resize.windowId = 1
+    resize.verbose = false
+    let window = ResizeTestMockWindow(
+      width: 100, height: 100, xAxis: nil, yAxis: nil, setSize: .nothing, setPosition: .nothing)
+    XCTAssertThrowsError(
+      try resize.changeRectOf(window, system: window),
+      "changeRectOf, currentPosition -> nil, -> error"
+    )
+  }
+
+  func testChangeRectOf_WhenValidPositionAndSize_ThenSetMethodWillBeCalled() throws {
+    var resize = ResizeTest.createValuedResize(
+      width: 1000, height: -1, xAxis: 300, yAxis: 4
+    )
+    resize.windowId = 1
+    resize.verbose = false
+    let window = ResizeTestMockWindow(
+      width: 100, height: 200, xAxis: 30, yAxis: 40, setSize: .nothing, setPosition: .nothing)
+    XCTAssertNoThrow(
+      try resize.changeRectOf(window, system: window),
+      "changeRectOf, currentSize -> nil, -> error"
+    )
+    XCTAssertEqual(CGSize(width: 1000, height: 200), window.actualNewSize)
+    XCTAssertEqual(CGPoint(x: 300, y: 4), window.actualNewPosition)
+    XCTAssertEqual(0, window.stderr.count)
+  }
+
+  func testChangeRectOf_WithVerboseOn_WhenValidPositionAndSize_ThenSetMethodWillBeCalled() throws {
+    var resize = ResizeTest.createValuedResize(
+      width: 1000, height: -1, xAxis: 300, yAxis: 4
+    )
+    resize.windowId = 1
+    resize.verbose = true
+    let window = ResizeTestMockWindow(
+      width: 100, height: 200, xAxis: 30, yAxis: 40, setSize: .nothing, setPosition: .nothing)
+    XCTAssertNoThrow(
+      try resize.changeRectOf(window, system: window),
+      "changeRectOf, currentSize -> nil, -> error"
+    )
+    XCTAssertEqual(CGSize(width: 1000, height: 200), window.actualNewSize)
+    XCTAssertEqual(CGPoint(x: 300, y: 4), window.actualNewPosition)
+    XCTAssertEqual(
+      2, window.stderr.count,
+      "stdout: \(window.stdout.joined(separator: "//")), stderr: \(window.stderr.joined(separator: "//"))"
+    )
+  }
+
+  func testChangeRectOf_WithVerboseOn_WithError_WhenValidPositionAndSize_ThenSetMethodWillBeCalled()
+    throws
+  {
+    var resize = ResizeTest.createValuedResize(
+      width: 1000, height: -1, xAxis: 300, yAxis: 4
+    )
+    resize.windowId = 1
+    resize.verbose = true
+    let window = ResizeTestMockWindow(
+      width: 100, height: 200, xAxis: 30, yAxis: 40, setSize: .failure(code: 1),
+      setPosition: .failure(code: 1))
+    XCTAssertNoThrow(
+      try resize.changeRectOf(window, system: window),
+      "changeRectOf, currentSize -> nil, -> error"
+    )
+    XCTAssertEqual(CGSize(width: 1000, height: 200), window.actualNewSize)
+    XCTAssertEqual(CGPoint(x: 300, y: 4), window.actualNewPosition)
+    XCTAssertEqual(
+      2, window.stderr.count,
+      "stdout: \(window.stdout.joined(separator: "//")), stderr: \(window.stderr.joined(separator: "//"))"
+    )
+  }
 }
 
 class MatchingWindowIdTest: XCTestCase {
@@ -249,5 +333,77 @@ class CalculateNewPositionTest: XCTestCase {
       position,
       "calculateNewPosition, input:[x:200,y:100], current:[x:40,y:30] -> [x:200,y:100]"
     )
+  }
+}
+
+class ResizeTestMockWindow: Window, SystemProtocol {
+  func write(stdout text: String) {
+    stdout.append(text)
+  }
+
+  func write(stderr text: String) {
+    stderr.append(text)
+  }
+
+  enum Returns {
+    case nothing
+    case success
+    case failure(code: Int32)
+  }
+
+  var stdout: [String] = []
+  var stderr: [String] = []
+
+  let windowSize: CGSize?
+  let windowPosition: CGPoint?
+
+  let resultOfSetSize: pp.OperationResult?
+  let resultOfSetPosition: pp.OperationResult?
+
+  init(width: Int?, height: Int?, xAxis: Int?, yAxis: Int?, setSize: Returns, setPosition: Returns)
+  {
+    if let w = width, let h = height {
+      self.windowSize = CGSize(width: w, height: h)
+    } else {
+      self.windowSize = nil
+    }
+    if let x = xAxis, let y = yAxis {
+      self.windowPosition = CGPoint(x: x, y: y)
+    } else {
+      self.windowPosition = nil
+    }
+    self.resultOfSetSize =
+      switch setSize {
+      case .success: pp.OperationResult(code: 0)
+      case .failure(let code): pp.OperationResult(code: code)
+      case .nothing: nil
+      }
+    self.resultOfSetPosition =
+      switch setPosition {
+      case .success: pp.OperationResult(code: 0)
+      case .failure(let code): pp.OperationResult(code: code)
+      case .nothing: nil
+      }
+  }
+
+  var actualNewSize: CGSize? = nil
+  var actualNewPosition: CGPoint? = nil
+
+  func getCurrentWindowSize() -> CGSize? {
+    windowSize
+  }
+
+  func getCurrentWindowPosition() -> CGPoint? {
+    windowPosition
+  }
+
+  func setSize(with newSize: CGSize?) -> pp.OperationResult? {
+    self.actualNewSize = newSize
+    return resultOfSetSize
+  }
+
+  func setPosition(with newPosition: CGPoint?) -> pp.OperationResult? {
+    self.actualNewPosition = newPosition
+    return resultOfSetPosition
   }
 }
