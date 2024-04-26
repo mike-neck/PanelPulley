@@ -48,3 +48,11 @@ test:
 	@echo $(@)
 	@swift test --parallel --xunit-output $(TEST_REPORT) --enable-code-coverage | tee "$(BUILD)/test-execution.log"
 	@cp "$$(swift test --show-coverage-path)" "$(BUILD)/test-coverage.json"
+
+ifneq "$(NEXT)" ""
+.PHONY: next-version
+next-version:
+	@echo $(@)
+	@$(PWD)/new-version.sh "$(NEXT)" | while read -r version; do git tag -a "$${version}" -m "$${version}" ; done
+
+endif
