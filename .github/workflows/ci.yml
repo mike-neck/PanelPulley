@@ -31,7 +31,7 @@ jobs:
           find ".build" -maxdepth 2 
           echo ""
           echo "== build =="
-          find build -type f
+          find build -type f -exec file {} \;
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
