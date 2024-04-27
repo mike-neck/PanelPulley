@@ -55,3 +55,8 @@ $ make build
 ```
 
 作成されたバイナリーは `build/release` ディレクトリーにあります。
+
+制限事項
+---
+
+- Google Chrome において `resize` コマンドが実行できないことを確認しています

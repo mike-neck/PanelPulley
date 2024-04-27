@@ -54,3 +54,8 @@ $ make build
 ```
 
 The created binary will be in the `build/release` directory.
+
+Limitations
+---
+
+- It has been confirmed that the `resize` command cannot be executed in Google Chrome. 
