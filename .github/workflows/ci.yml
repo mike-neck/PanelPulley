@@ -19,6 +19,14 @@ jobs:
         with:
           swift-version: "5.10"
 
+      - name: Cache Libraries
+        uses: actions/cache@v4
+        with:
+          path: |
+            .build/checkouts
+            .build/repositories
+          key: "Package::${{ hashFiles('Package.swift') }}"
+
       - name: Build
         run: make build
 
