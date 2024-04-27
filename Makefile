@@ -25,8 +25,11 @@ endef
 
 $(foreach config,$(CONFIGURATIONS),$(eval $(call BuildTask,$(config))))
 
-.PHONY: all $(BUILD)
+.PHONY: all $(BUILD) build-dir
 all: $(foreach config,$(CONFIGURATIONS),build-$(config))
+
+build-dir:
+	@mkdir -p $(BUILD)
 
 $(BUILD): all
 	@test -d $(@) || mkdir $(@)
@@ -49,6 +52,7 @@ format:
 endif
 
 .PHONY: test
+test: build-dir
 test:
 	@echo $(@)
 	@swift test --parallel --xunit-output $(TEST_REPORT) --enable-code-coverage | tee "$(BUILD)/test-execution.log"
