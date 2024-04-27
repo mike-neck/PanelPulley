@@ -16,6 +16,9 @@ let package = Package(
             name: "pp",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
+            ],
+            resources: [
+                .copy("version.txt"),
             ]
         ),
         .testTarget(

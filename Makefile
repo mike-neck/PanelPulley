@@ -10,9 +10,14 @@ tasks:
 	@echo $(@)
 	@$(foreach config,$(CONFIGURATIONS), echo build-$(config);)
 
+.PHONY: version.txt
+version.txt:
+	@echo $(@)
+	@(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0") > Sources/$(@)
+
 define BuildTask
 .PHONY: build-$(1)
-build-$(1):
+build-$(1): version.txt
 	@echo $(1)
 	@swift build --configuration $(1)
 
