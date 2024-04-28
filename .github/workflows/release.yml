@@ -63,7 +63,7 @@ jobs:
 
       - name: Release
         run: make create-release
-        with:
+        env:
           ARCHIVE_FILE: ${{ steps.archiveName.outputs.file }}
           TAG_NAME: ${{ steps.tagName.outputs.version }}
           GH_TOKEN: ${{ github.token }}
