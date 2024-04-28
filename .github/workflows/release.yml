@@ -24,7 +24,11 @@ jobs:
 
       - name: Set version
         id: tagName
-        run: make set-version >> "$GITHUB_OUTPUT"
+        run: |
+          declare version="${REF_TAG}"
+          [[ "${version}" =~ refs/tags/.* ]] || version="${INPUT_TAG:-""}"
+          [[ -z "${version}" ]] && exit 1
+          echo "${OUTPUT_NAME}=${version}" >> "${GITHUB_OUTPUT}"
         env:
           REF_TAG: ${{ github.ref }}
           INPUT_TAG: ${{ inputs.tag }}
