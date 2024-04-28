@@ -60,9 +60,8 @@ jobs:
           OUTPUT_NAME: file
 
       - name: Release
-        uses: softprops/action-gh-release@v2
+        run: make create-release
         with:
-          files: ${{ steps.archiveName.outputs.file }}
-          tag_name: ${{ steps.tagName.outputs.version }}
-          generate_release_notes: true
-
+          ARCHIVE_FILE: ${{ steps.archiveName.outputs.file }}
+          TAG_NAME: ${{ steps.tagName.outputs.version }}
+          GH_TOKEN: ${{ github.token }}
