@@ -10,7 +10,7 @@ import Foundation
 @main
 struct PanelPulley: ParsableCommand {
   static let configuration = CommandConfiguration(
-    commandName: "pp",
+    commandName: "ppl",
     abstract: "Window utility",
     usage: "manipulates windows.",
     version: appVersion,

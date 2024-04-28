@@ -5,10 +5,24 @@ BUILD := build
 CACHE_DIRS := repositories checkouts
 TEST_REPORT := $(BUILD)/test-report.xml
 
+ALL_SCRIPTS := $(wildcard scripts/*)
+SCRIPTS := $(subst scripts/,,$(ALL_SCRIPTS))
+
+ARCH := $(shell uname -m)
+OS_NAME := $(shell uname -s)
+
 .PHONY: tasks
 tasks:
 	@echo $(@)
 	@$(foreach config,$(CONFIGURATIONS), echo build-$(config);)
+	@echo $(BUILD)
+	@echo all
+	@echo build-dir
+	@echo clean
+	@echo format
+	@echo test
+	@echo next-version
+	@$(foreach script,$(SCRIPTS), echo $(script);)
 
 .PHONY: version.txt
 version.txt:
@@ -35,6 +49,7 @@ $(BUILD): all
 	@test -d $(@) || mkdir $(@)
 	@$(foreach config,$(CONFIGURATIONS),mkdir -p $(BUILD)/$(config) ;)
 	@$(foreach config,$(CONFIGURATIONS),find -H $(BUILD_DIR)/$(config) -type f -perm 0755 -exec cp "{}" "$(BUILD)/$(config)/" \; ;)
+	@$(foreach config,$(CONFIGURATIONS),find $(BUILD)/$(config) -type f -perm 0755 -exec zip --junk-paths "$(BUILD)/$(OS_NAME)-$(config)-$(ARCH).zip" "{}" \; ;)
 
 .PHONY: clean
 clean:
@@ -65,3 +80,7 @@ next-version:
 	@$(PWD)/new-version.sh "$(NEXT)" | while read -r version; do git tag -a "$${version}" -m "$${version}" ; done
 
 endif
+
+.PHONY: $(SCRIPTS)
+$(SCRIPTS):
+	@./scripts/$(@)

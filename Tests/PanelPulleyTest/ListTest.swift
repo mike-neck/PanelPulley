@@ -2,7 +2,7 @@ import CoreGraphics
 import Foundation
 import XCTest
 
-@testable import pp
+@testable import ppl
 
 protocol PanelPulleyTestUtil {
 }

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+readonly outputName="${OUTPUT_NAME:-output}"
+if [[ -z "${outputName}" ]]; then
+  echo "output name[OUTPUT_NAME] is empty" > /dev/stderr
+  exit 1
+fi
+readonly buildDir="build"
+readonly targetName="${ARCHIVE_TARGET:-"debug"}"
+if [[ -z "${targetName}" ]]; then
+  echo "no ARCHIVE_TARGET given" > /dev/stderr
+  exit 1
+fi
+
+find \
+  "${buildDir}" \
+  -type f \
+  -name "*${targetName}*.zip" \
+  -exec echo "${outputName}={}" \;

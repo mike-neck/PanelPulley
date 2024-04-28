@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-readonly app="${PWD}/.build/debug/pp"
+readonly app="${PWD}/.build/debug/ppl"
 
 if [[ ! -x "${app}" ]]; then
   echo "executable[${app}] not found" >> /dev/stderr

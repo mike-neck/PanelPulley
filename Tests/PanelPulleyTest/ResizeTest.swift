@@ -1,7 +1,7 @@
 import Foundation
 import XCTest
 
-@testable import pp
+@testable import ppl
 
 class ResizeEnvTest: XCTestCase {
   func testIsDebug_WhenVerboseTrue_ReturnsTrue() {
@@ -357,8 +357,8 @@ class ResizeTestMockWindow: Window, SystemProtocol {
   let windowSize: CGSize?
   let windowPosition: CGPoint?
 
-  let resultOfSetSize: pp.OperationResult?
-  let resultOfSetPosition: pp.OperationResult?
+  let resultOfSetSize: ppl.OperationResult?
+  let resultOfSetPosition: ppl.OperationResult?
 
   init(width: Int?, height: Int?, xAxis: Int?, yAxis: Int?, setSize: Returns, setPosition: Returns)
   {
@@ -374,14 +374,14 @@ class ResizeTestMockWindow: Window, SystemProtocol {
     }
     self.resultOfSetSize =
       switch setSize {
-      case .success: pp.OperationResult(code: 0)
-      case .failure(let code): pp.OperationResult(code: code)
+      case .success: ppl.OperationResult(code: 0)
+      case .failure(let code): ppl.OperationResult(code: code)
       case .nothing: nil
       }
     self.resultOfSetPosition =
       switch setPosition {
-      case .success: pp.OperationResult(code: 0)
-      case .failure(let code): pp.OperationResult(code: code)
+      case .success: ppl.OperationResult(code: 0)
+      case .failure(let code): ppl.OperationResult(code: code)
       case .nothing: nil
       }
   }
@@ -397,12 +397,12 @@ class ResizeTestMockWindow: Window, SystemProtocol {
     windowPosition
   }
 
-  func setSize(with newSize: CGSize?) -> pp.OperationResult? {
+  func setSize(with newSize: CGSize?) -> ppl.OperationResult? {
     self.actualNewSize = newSize
     return resultOfSetSize
   }
 
-  func setPosition(with newPosition: CGPoint?) -> pp.OperationResult? {
+  func setPosition(with newPosition: CGPoint?) -> ppl.OperationResult? {
     self.actualNewPosition = newPosition
     return resultOfSetPosition
   }

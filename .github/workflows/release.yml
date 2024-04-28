@@ -1,0 +1,62 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - *
+  workflow_dispatch:
+    inputs:
+      tag:
+        required: true
+        description: a tag name to be released
+        type: string
+
+jobs:
+  release:
+    runs-on: macos-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "5.10"
+
+      - name: Set version
+        id: tagName
+        run: make set-version >> "$GITHUB_OUTPUT"
+        env:
+          REF_TAG: ${{ github.ref }}
+          INPUT_TAG: ${{ inputs.tag }}
+          OUTPUT_NAME: version
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.tagName.outputs.version }}
+
+      - name: Cache Libraries
+        uses: actions/cache@v4
+        with:
+          path: |
+            .build/checkouts
+            .build/repositories
+          key: "Package::${{ hashFiles('Package.swift') }}"
+
+      - name: Build
+        run: make build
+
+      - name: Set archive name
+        id: archiveName
+        run: make set-name >> "$GITHUB_OUTPUT"
+        env:
+          ARCHIVE_TARGET: release
+          OUTPUT_NAME: file
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.archiveName.outputs.file }}
+          tag_name: ${{ steps.tagName.outputs.version }}
+          generate_release_notes: true
+

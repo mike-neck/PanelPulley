@@ -6,14 +6,14 @@ import PackageDescription
 let package = Package(
     name: "PanelPulley",
     products: [
-        .executable(name: "pp", targets: ["pp"]),
+        .executable(name: "ppl", targets: ["ppl"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.2.0"),
     ],
     targets: [
         .executableTarget(
-            name: "pp",
+            name: "ppl",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ],
@@ -24,7 +24,7 @@ let package = Package(
         .testTarget(
             name: "PanelPulleyTest",
             dependencies: [
-                "pp",
+                "ppl",
             ]
         ),
     ]

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+readonly outputName="${OUTPUT_NAME:-output}"
+if [[ -z "${outputName}" ]]; then
+  echo "output name[OUTPUT_NAME] is empty" > /dev/stderr
+  exit 1
+fi
+readonly refTag="${REF_TAG:-""}"
+if [[ -n "${refTag}" ]] && grep -q 'refs/tags/v' <<< "${refTag}" ; then
+  sed "s/refs\/tags\//${outputName}=/g" <<< "refTag"
+  exit 0
+fi
+
+readonly inputTag="${INPUT_TAG:-""}"
+if [[ -n "${inputTag}" ]]; then
+  echo "${outputName}=${inputTag}"
+  exit 0
+fi
+
+echo '::error file=set-version,line=15,endLine=15,title=No version given::[push tag] event or [inputs#tag] parameter is required'
+exit 1
