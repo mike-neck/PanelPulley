@@ -49,6 +49,8 @@ jobs:
 
       - name: Build
         run: make build
+        env:
+          TAG_NAME: ${{ steps.tagName.outputs.version }}
 
       - name: Set archive name
         id: archiveName

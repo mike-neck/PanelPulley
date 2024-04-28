@@ -25,9 +25,17 @@ tasks:
 	@$(foreach script,$(SCRIPTS), echo $(script);)
 
 .PHONY: version.txt
+ifeq "$(TAG_NAME)" ""
 version.txt:
 	@echo $(@)
-	@(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0") > Sources/$(@)
+	@echo "v0.0.0" > Sources/$(@)
+
+else
+version.txt:
+	@echo $(@)
+	@echo $(TAG_NAME) > Sources/$(@)
+
+endif
 
 define BuildTask
 .PHONY: build-$(1)
