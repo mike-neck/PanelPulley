@@ -205,7 +205,7 @@ extension AXUIElement: Window {
     guard let size = AXValueCreate(.cgSize, &windowSize) else {
       return nil
     }
-    let err = AXUIElementSetAttributeValue(self, kAXWindowsAttribute as CFString, size)
+    let err = AXUIElementSetAttributeValue(self, Resize.SIZE, size)
     return OperationResult(code: err.rawValue)
   }
 
