@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+readonly tagName="${TAG_NAME:-"$(git describe --tags --abbrev=0 2>/dev/null | tr -d '\n')"}"
+if [[ -z "${tagName}" ]]; then
+  echo "no TAG_NAME given" > /dev/stderr
+  exit 1
+fi
+
+readonly archiveFile="${ARCHIVE_FILE:-""}"
+if [[ -z "${archiveFile}" ]]; then
+  echo "no ARCHIVE_FILE given" > /dev/stderr
+  exit 1
+fi
+readonly displayFileName="$(basename "${archiveFile}")"
+
+readonly releaseURL="$( \
+  gh release view \
+    "${tagName}" \
+    --json 'url' \
+    --jq '.url' \
+    2>/dev/null | \
+  tr -d '\n'
+)"
+
+if [[ -z "${releaseURL}" ]]; then
+  echo "release[version:${tagName}] does not exist" > /dev/stderr
+  exit 2
+fi
+
+echo "Uploading archive: ${archiveFile} as ${displayFileName}"
+
+gh release upload \
+  "${tagName}" \
+  "${archiveFile}#${displayFileName}"
+
+echo "Done"

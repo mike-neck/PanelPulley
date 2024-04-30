@@ -64,6 +64,13 @@ jobs:
       - name: Release
         run: make create-release
         env:
+          TAG_NAME: ${{ steps.tagName.outputs.version }}
+          GH_TOKEN: ${{ github.token }}
+
+
+      - name: Upload
+        run: make upload-release
+        env:
           ARCHIVE_FILE: ${{ steps.archiveName.outputs.file }}
           TAG_NAME: ${{ steps.tagName.outputs.version }}
           GH_TOKEN: ${{ github.token }}

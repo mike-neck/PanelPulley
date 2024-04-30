@@ -6,13 +6,6 @@ if [[ -z "${tagName}" ]]; then
   exit 1
 fi
 
-readonly archiveFile="${ARCHIVE_FILE:-""}"
-if [[ -z "${archiveFile}" ]]; then
-  echo "no ARCHIVE_FILE given" > /dev/stderr
-  exit 1
-fi
-readonly displayFileName="$(basename "${archiveFile}")"
-
 readonly releaseURL="$( \
   gh release view \
     "${tagName}" \
@@ -33,13 +26,5 @@ gh release create \
   "${tagName}" \
   --generate-notes \
   --target main
-
-echo "Done"
-
-echo "Uploading archive: ${archiveFile} as ${displayFileName}"
-
-gh release upload \
-  "${tagName}" \
-  "${archiveFile}#${displayFileName}"
 
 echo "Done"
